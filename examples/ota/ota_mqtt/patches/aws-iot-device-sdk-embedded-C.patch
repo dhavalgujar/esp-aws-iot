@@ -1,0 +1,224 @@
+Submodule libraries/aws/ota-for-aws-iot-embedded-sdk contains modified content
+diff --git a/libraries/aws/ota-for-aws-iot-embedded-sdk/source/ota.c b/libraries/aws/ota-for-aws-iot-embedded-sdk/source/ota.c
+index 09fd019..9063a89 100644
+--- a/libraries/aws/ota-for-aws-iot-embedded-sdk/source/ota.c
++++ b/libraries/aws/ota-for-aws-iot-embedded-sdk/source/ota.c
+@@ -769,9 +769,9 @@ static OtaErr_t startHandler( const OtaEventData_t * pEventData )
+     if( platformInSelftest() == true )
+     {
+         ( void ) otaAgent.pOtaInterface->os.timer.start( OtaSelfTestTimer,
+-                                                         "OtaSelfTestTimer",
+-                                                         otaconfigSELF_TEST_RESPONSE_WAIT_MS,
+-                                                         otaTimerCallback );
++                                                              "OtaSelfTestTimer",
++                                                              otaconfigSELF_TEST_RESPONSE_WAIT_MS,
++                                                              otaTimerCallback );
+     }
+ 
+     /* Send event to OTA task to get job document. */
+@@ -846,9 +846,9 @@ static OtaErr_t requestJobHandler( const OtaEventData_t * pEventData )
+         {
+             /* Start the request timer. */
+             osErr = otaAgent.pOtaInterface->os.timer.start( OtaRequestTimer,
+-                                                            "OtaRequestTimer",
+-                                                            otaconfigFILE_REQUEST_WAIT_MS,
+-                                                            otaTimerCallback );
++                                                                 "OtaRequestTimer",
++                                                                 otaconfigFILE_REQUEST_WAIT_MS,
++                                                                 otaTimerCallback );
+ 
+             if( osErr != OtaOsSuccess )
+             {
+@@ -1025,9 +1025,9 @@ static OtaErr_t initFileHandler( const OtaEventData_t * pEventData )
+         {
+             /* Start the request timer. */
+             osErr = otaAgent.pOtaInterface->os.timer.start( OtaRequestTimer,
+-                                                            "OtaRequestTimer",
+-                                                            otaconfigFILE_REQUEST_WAIT_MS,
+-                                                            otaTimerCallback );
++                                                                 "OtaRequestTimer",
++                                                                 otaconfigFILE_REQUEST_WAIT_MS,
++                                                                 otaTimerCallback );
+ 
+             if( osErr != OtaOsSuccess )
+             {
+@@ -1092,9 +1092,9 @@ static OtaErr_t requestDataHandler( const OtaEventData_t * pEventData )
+     {
+         /* Start the request timer. */
+         osErr = otaAgent.pOtaInterface->os.timer.start( OtaRequestTimer,
+-                                                        "OtaRequestTimer",
+-                                                        otaconfigFILE_REQUEST_WAIT_MS,
+-                                                        otaTimerCallback );
++                                                             "OtaRequestTimer",
++                                                             otaconfigFILE_REQUEST_WAIT_MS,
++                                                             otaTimerCallback );
+ 
+         if( ( osErr == OtaOsSuccess ) && ( otaAgent.requestMomentum < otaconfigMAX_NUM_REQUEST_MOMENTUM ) )
+         {
+@@ -1615,7 +1615,7 @@ static DocParseErr_t extractAndStoreArray( const char * pKey,
+             LogError( ( "Memory allocation failed "
+                         "[key: valueLength]=[%s: %lu]",
+                         pKey,
+-                        valueLength ) );
++                        ( unsigned long ) valueLength ) );
+         }
+     }
+     else
+@@ -1627,7 +1627,7 @@ static DocParseErr_t extractAndStoreArray( const char * pKey,
+             LogError( ( "Insufficient user memory: "
+                         "[key: valueLength]=[%s: %lu]",
+                         pKey,
+-                        valueLength ) );
++                        ( unsigned long ) valueLength ) );
+         }
+     }
+ 
+@@ -1706,7 +1706,7 @@ static DocParseErr_t extractParameter( JsonDocParam_t docParam,
+ 
+     if( err != DocParseErrNone )
+     {
+-        LogError( ( "Failed to extract document parameter: error=%d, paramter key=%s",
++        LogDebug( ( "Failed to extract document parameter: error=%d, paramter key=%s",
+                     err, docParam.pSrcKey ) );
+     }
+ 
+@@ -1732,10 +1732,10 @@ static DocParseErr_t verifyRequiredParamsExtracted( const JsonDocParam_t * pMode
+         {
+             if( ( missingParams & ( ( uint32_t ) 1U << scanIndex ) ) != 0U )
+             {
+-                LogInfo( ( "Failed job document content check: "
+-                           "Required job document parameter was not extracted: "
+-                           "parameter=%s",
+-                           pModelParam[ scanIndex ].pSrcKey ) );
++                LogDebug( ( "Failed job document content check: "
++                            "Required job document parameter was not extracted: "
++                            "parameter=%s",
++                            pModelParam[ scanIndex ].pSrcKey ) );
+             }
+         }
+ 
+@@ -1818,9 +1818,9 @@ static DocParseErr_t parseJSONbyModel( const char * pJson,
+ 
+     if( err != DocParseErrNone )
+     {
+-        LogInfo( ( "Failed to parse JSON document as AFR_OTA job: "
+-                   "DocParseErr_t=%d",
+-                   err ) );
++        LogDebug( ( "Failed to parse JSON document as AFR_OTA job: "
++                    "DocParseErr_t=%d",
++                    err ) );
+     }
+ 
+     return err;
+@@ -2000,8 +2000,8 @@ static OtaJobParseErr_t handleCustomJob( const char * pJson,
+             /* Job is malformed - return an error */
+             err = OtaJobParseErrNonConformingJobDoc;
+ 
+-            LogError( ( "Failed to parse custom job document: OtaJobParseErr_t=%s, jobIdLength=%lu",
+-                        OTA_JobParse_strerror( jobDoc.parseErr ), jobDoc.jobIdLength ) );
++            LogDebug( ( "Failed to parse custom job document: OtaJobParseErr_t=%s, jobIdLength=%lu",
++                        OTA_JobParse_strerror( jobDoc.parseErr ), ( unsigned long ) jobDoc.jobIdLength ) );
+         }
+     }
+     else
+@@ -2084,9 +2084,9 @@ static OtaJobParseErr_t verifyActiveJobStatus( OtaFileContext_t * pFileContext,
+     }
+     else
+     {
+-        LogWarn( ( "Parameter check failed: "
+-                   "pJobName is NULL while the OTA Agent is busy: "
+-                   "Ignoring parameter check failure." ) );
++        LogDebug( ( "Parameter check failed: "
++                    "pJobName is NULL while the OTA Agent is busy: "
++                    "Ignoring parameter check failure." ) );
+         err = OtaJobParseErrNullJob;
+     }
+ 
+@@ -2201,7 +2201,7 @@ static OtaJobParseErr_t validateAndStartJob( OtaFileContext_t * pFileContext,
+     }
+     else
+     {
+-        LogError( ( "Failed to validate and start the job: OtaJobParseErr_t=%s", OTA_JobParse_strerror( err ) ) );
++        LogDebug( ( "Failed to validate and start the job: OtaJobParseErr_t=%s", OTA_JobParse_strerror( err ) ) );
+     }
+ 
+     return err;
+@@ -2560,9 +2560,9 @@ static IngestResult_t decodeAndStoreDataBlock( OtaFileContext_t * pFileContext,
+     if( ( pFileContext->pRxBlockBitmap != NULL ) && ( pFileContext->blocksRemaining > 0U ) )
+     {
+         ( void ) otaAgent.pOtaInterface->os.timer.start( OtaRequestTimer,
+-                                                         "OtaRequestTimer",
+-                                                         otaconfigFILE_REQUEST_WAIT_MS,
+-                                                         otaTimerCallback );
++                                                              "OtaRequestTimer",
++                                                              otaconfigFILE_REQUEST_WAIT_MS,
++                                                              otaTimerCallback );
+ 
+         if( otaAgent.fileContext.decodeMemMaxSize != 0U )
+         {
+@@ -2826,7 +2826,7 @@ static void executeHandler( uint32_t index,
+     }
+     else
+     {
+-        LogError( ( "Failed to execute state transition handler: "
++        LogDebug( ( "Failed to execute state transition handler: "
+                     "Handler returned error: OtaErr_t=%s",
+                     OTA_Err_strerror( err ) ) );
+     }
+diff --git a/libraries/aws/ota-for-aws-iot-embedded-sdk/source/portable/os/ota_os_freertos.c b/libraries/aws/ota-for-aws-iot-embedded-sdk/source/portable/os/ota_os_freertos.c
+index a8c81ea..5ff3ef7 100644
+--- a/libraries/aws/ota-for-aws-iot-embedded-sdk/source/portable/os/ota_os_freertos.c
++++ b/libraries/aws/ota-for-aws-iot-embedded-sdk/source/portable/os/ota_os_freertos.c
+@@ -27,9 +27,9 @@
+  */
+ 
+ /* FreeRTOS includes. */
+-#include "FreeRTOS.h"
+-#include "timers.h"
+-#include "queue.h"
++#include "freertos/FreeRTOS.h"
++#include "freertos/timers.h"
++#include "freertos/queue.h"
+ 
+ /* OTA OS POSIX Interface Includes.*/
+ #include "ota_os_freertos.h"
+Submodule libraries/standard/corePKCS11 contains modified content
+diff --git a/libraries/standard/corePKCS11/source/portable/posix/core_pkcs11_pal.c b/libraries/standard/corePKCS11/source/portable/posix/core_pkcs11_pal.c
+index 2ed38a1..5ba3dd1 100644
+--- a/libraries/standard/corePKCS11/source/portable/posix/core_pkcs11_pal.c
++++ b/libraries/standard/corePKCS11/source/portable/posix/core_pkcs11_pal.c
+@@ -262,7 +262,7 @@ static CK_RV prvReadData( const char * pcFileName,
+         if( lSize != *pulDataSize )
+         {
+             LogError( ( "PKCS #11 PAL Failed to get object value. Expected to read %ld "
+-                        "from %s but received %ld", *pulDataSize, pcFileName, lSize ) );
++                        "from %s but received %zu", *pulDataSize, pcFileName, lSize ) );
+             xReturn = CKR_FUNCTION_FAILED;
+         }
+     }
+@@ -321,12 +321,12 @@ CK_OBJECT_HANDLE PKCS11_PAL_SaveObject( CK_ATTRIBUTE_PTR pxLabel,
+             if( ulBytesWritten != ulDataSize )
+             {
+                 LogError( ( "PKCS #11 PAL was unable to save object to file. "
+-                            "Expected to write %lu bytes, but wrote %lu bytes.", ulDataSize, ulBytesWritten ) );
++                            "Expected to write %ld bytes, but wrote %zu bytes.", ulDataSize, ulBytesWritten ) );
+                 xHandle = ( CK_OBJECT_HANDLE ) eInvalidHandle;
+             }
+             else
+             {
+-                LogDebug( ( "Successfully wrote %lu to %s", ulBytesWritten, pcFileName ) );
++                LogDebug( ( "Successfully wrote %zu to %s", ulBytesWritten, pcFileName ) );
+             }
+         }
+ 
+diff --git a/platform/posix/clock_posix.c b/platform/posix/clock_posix.c
+index b5cb6af..f818336 100644
+--- a/platform/posix/clock_posix.c
++++ b/platform/posix/clock_posix.c
+@@ -73,5 +73,5 @@ void Clock_SleepMs( uint32_t sleepTimeMs )
+     sleepTime.tv_nsec = ( ( int64_t ) sleepTimeMs % MILLISECONDS_PER_SECOND ) * NANOSECONDS_PER_MILLISECOND;
+ 
+     /* High resolution sleep. */
+-    ( void ) nanosleep( &sleepTime, NULL );
++    // ( void ) nanosleep( &sleepTime, NULL );
+ }
