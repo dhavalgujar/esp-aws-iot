@@ -81,24 +81,14 @@ static const char * TAG = "ota_pal";
 
 #define otapalconfigCODE_SIGNING_CERTIFICATE                         \
 "-----BEGIN CERTIFICATE-----\n"                                      \
-"MIIDPDCCAiSgAwIBAgIBATANBgkqhkiG9w0BAQUFADB8MQswCQYDVQQGEwJJTDEP\n" \
-"MA0GA1UECAwGU2hhcm9uMRAwDgYDVQQHDAdSYWFuYW5hMR8wHQYDVQQKDBZUZXhh\n" \
-"cyBJbnN0cnVtZW50cyBJbmMuMQwwCgYDVQQLDANSTkQxGzAZBgNVBAMMEmR1bW15\n" \
-"LXJvb3QtY2EtY2VydDAeFw0xODA2MjcxOTI4NTNaFw0xOTA2MjcxOTI4NTNaMCEx\n" \
-"HzAdBgNVBAMMFnRlc3Rfc2lnbmVyQGFtYXpvbi5jb20wggEiMA0GCSqGSIb3DQEB\n" \
-"AQUAA4IBDwAwggEKAoIBAQC5craIexo46oq3OTj+3fLz17MCtw/icXku8sJ16el0\n" \
-"29Cibq4u8bdJeDnGlc42UySw0UlodWnzd5I52tXoXcQZs++m6uQ3JvvRHFXpNuV6\n" \
-"Cyo//AdQ2MoqdKK8/pZqu4X71/xXHcIMBb3kS1RSkunJB65mPuPOfjcem6IXDtRk\n" \
-"E346aN6wMfeIlmwOoFK4RBoWse459ELB5aq0tSwUmHv7UcyHYQf4Cxkz5HjWfx0y\n" \
-"NYKCR4tPoudjg8E9R6uqik7DFlqrijNW2XdXS67d/cVToDJFn1SnYcHStARAoZUK\n" \
-"gP0JwXTapO31QThi9q+q63FETBcnEQ29rfmeN1/pBOI/AgMBAAGjJDAiMAsGA1Ud\n" \
-"DwQEAwIHgDATBgNVHSUEDDAKBggrBgEFBQcDAzANBgkqhkiG9w0BAQUFAAOCAQEA\n" \
-"W29xvDV66B7NYAOSqXIG11JH+Pk2GFzZl5gNehkcDPPMHumBRNHHZqVAO4mah3Ej\n" \
-"StqWmTXnIs5YKX9Ro7ch3NfKHMt4/JFvR7v9VolVIVwZZB+AQU1BD8OAGlHNEq28\n" \
-"TbOdkpdv9Q69W4TVsqXAkVhONekLkEJQTZyhW7db28nb/LizftfN4ps+uuE2Xl9c\n" \
-"YHmgWb/xqi9NIcsyQL08urJVCnyGuLQgj+GfitELFsCfc3ohhacNENsXupRIOz08\n" \
-"NCa9WuCyk5uwoo6mn6JIErBMLqLTBcs82vq9d7WIFHf4QpgTs2FuelY/Hyw7HRFo\n" \
-"Ml3tXnR4B4lqeJy/BP6/GA==\n"                                         \
+"MIIBcDCCARagAwIBAgIUYNy4lAy9AREPtp+bBG0chiEDUQMwCgYIKoZIzj0EAwIw\n" \
+"JTEjMCEGA1UEAwwaZGhhdmFsLmd1amFyQGVzcHJlc3NpZi5jb20wHhcNMjEwNzA2\n" \
+"MTI0MTA5WhcNMjIwNzA2MTI0MTA5WjAlMSMwIQYDVQQDDBpkaGF2YWwuZ3VqYXJA\n" \
+"ZXNwcmVzc2lmLmNvbTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABI/b7P+Y2c6f\n" \
+"PAD0fC2DCwaAUT/cplFr4AwyYjYk4qlAnBaEbltmukvZKIjkIct7sNEK0rbXSNf1\n" \
+"/QHDWu2hqkmjJDAiMAsGA1UdDwQEAwIHgDATBgNVHSUEDDAKBggrBgEFBQcDAzAK\n" \
+"BggqhkjOPQQDAgNIADBFAiEA6kjPuxXvyKEnavPC0R2B+uR3nTntrkiszXPuwbMA\n" \
+"CxICIGUnuxeOEx7SAT1O9G6b/k3oNxDf4xjzgHs7dcaSxwAo\n"                 \
 "-----END CERTIFICATE-----"
 
 static const char codeSigningCertificatePEM[] = otapalconfigCODE_SIGNING_CERTIFICATE;
@@ -385,31 +375,22 @@ uint8_t * otaPal_ReadAndAssumeCertificate( const uint8_t * const pucCertName,
     uint8_t * pucSignerCert = NULL;
     CK_RV xResult;
 
-    xResult = prvGetCertificate( ( const char * ) pucCertName, &pucSignerCert, ulSignerCertSize );
+    LogInfo( ( "No such certificate file: %s. Using certificate in ota_demo_config.h.",
+               ( const char * ) pucCertName ) );
 
-    if( ( xResult == CKR_OK ) && ( pucSignerCert != NULL ) )
+    /* Allocate memory for the signer certificate plus a terminating zero so we can copy it and return to the caller. */
+    ulCertSize = sizeof( codeSigningCertificatePEM );
+    pucSignerCert = pvPortMalloc( ulCertSize );            /*lint !e9029 !e9079 !e838 malloc proto requires void*. */
+    pucCertData = ( uint8_t * ) codeSigningCertificatePEM; /*lint !e9005 we don't modify the cert but it could be set by PKCS11 so it's not const. */
+
+    if( pucSignerCert != NULL )
     {
-        LogInfo( ( "Using cert with label: %s OK", ( const char * ) pucCertName ) );
+        memcpy( pucSignerCert, pucCertData, ulCertSize );
+        *ulSignerCertSize = ulCertSize;
     }
     else
     {
-        LogInfo( ( "No such certificate file: %s. Using certificate in ota_demo_config.h.",
-                   ( const char * ) pucCertName ) );
-
-        /* Allocate memory for the signer certificate plus a terminating zero so we can copy it and return to the caller. */
-        ulCertSize = sizeof( codeSigningCertificatePEM );
-        pucSignerCert = pvPortMalloc( ulCertSize );            /*lint !e9029 !e9079 !e838 malloc proto requires void*. */
-        pucCertData = ( uint8_t * ) codeSigningCertificatePEM; /*lint !e9005 we don't modify the cert but it could be set by PKCS11 so it's not const. */
-
-        if( pucSignerCert != NULL )
-        {
-            memcpy( pucSignerCert, pucCertData, ulCertSize );
-            *ulSignerCertSize = ulCertSize;
-        }
-        else
-        {
-            LogError( ( "No memory for certificate in otaPal_ReadAndAssumeCertificate!" ) );
-        }
+        LogError( ( "No memory for certificate in otaPal_ReadAndAssumeCertificate!" ) );
     }
 
     return pucSignerCert;

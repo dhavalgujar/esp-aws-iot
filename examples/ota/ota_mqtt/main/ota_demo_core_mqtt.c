@@ -68,6 +68,7 @@
 #include "ota_appversion32.h"
 
 #include "demo_header.h"
+#include "iot_crypto.h"
 
 /**
  * These configuration settings are required to run the OTA demo which uses mutual authentication.
@@ -1691,6 +1692,8 @@ int aws_iot_demo_main( int argc,
 {
     ( void ) argc;
     ( void ) argv;
+
+    CRYPTO_Init();
 
     /* Return error status. */
     int returnStatus = EXIT_SUCCESS;
